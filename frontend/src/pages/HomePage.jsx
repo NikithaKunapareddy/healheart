@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Search,
   MapPin,
@@ -9,20 +9,16 @@ import {
   Store,
   ArrowRight,
   CheckCircle2,
-  Zap,
   Heart,
   Package,
-  Users,
-  TrendingUp,
   BarChart3,
   AlertCircle,
   Sparkles,
   Activity,
-  Globe,
-  Star,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 // Animated gradient background
 const AnimatedBackground = () => (
@@ -30,32 +26,6 @@ const AnimatedBackground = () => (
     <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl animate-pulse" />
     <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-500" />
-  </div>
-);
-
-// Floating particles
-const FloatingParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(15)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-2 h-2 bg-primary-400/20 rounded-full"
-        initial={{
-          x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-          y: Math.random() * 600,
-        }}
-        animate={{
-          y: [null, Math.random() * -100, Math.random() * 100],
-          x: [null, Math.random() * 50 - 25],
-          opacity: [0.2, 0.5, 0.2],
-        }}
-        transition={{
-          duration: Math.random() * 5 + 5,
-          repeat: Infinity,
-          repeatType: 'reverse',
-        }}
-      />
-    ))}
   </div>
 );
 
@@ -134,218 +104,423 @@ const CustomerHomePage = ({ user }) => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <AnimatedBackground />
-      <FloatingParticles />
 
-      {/* Hero Section */}
-      <section className="relative py-16 lg:py-24 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="relative z-10"
-            >
-              {/* Badge */}
+      {/* HERO SECTION - Centered Quote First */}
+      <section className="relative py-16 lg:py-20 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6"
+          >
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span className="text-sm text-white/80 font-medium">Emergency Medicine Locator</span>
+          </motion.div>
+
+          {/* Main Heading - Large & Centered */}
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight mb-6"
+          >
+            Find{' '}
+            <span className="gradient-text bg-gradient-to-r from-primary-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Life-Saving
+            </span>
+            <br />
+            Medicines{' '}
+            <TypewriterText
+              texts={['Nearby', 'Instantly', 'Now']}
+              className="text-primary-400"
+            />
+          </motion.h1>
+
+          {/* Powerful Quote - Centered */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8"
+          >
+            <p className="text-xl sm:text-2xl font-medium text-white/90 italic mb-4">
+              "No one should lose a life because they couldn't find a medicine in time."
+            </p>
+            <p className="text-lg text-white/60 max-w-2xl mx-auto">
+              In medical emergencies, every second counts. Our platform connects you to nearby pharmacies with the medicines you need — fast.
+            </p>
+          </motion.div>
+
+          {/* CTA Buttons - Centered */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-10"
+          >
+            <Link to="/search">
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(20, 184, 166, 0.4)' }}
+                whileTap={{ scale: 0.98 }}
+                className="glass-button flex items-center gap-3 justify-center text-lg px-8 py-4 relative overflow-hidden group"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-purple-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
+                <Search size={24} />
+                <span className="font-semibold">Find Medicine Now</span>
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            </Link>
+
+            {!user && (
+              <Link to="/auth">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-button-secondary flex items-center gap-2 justify-center px-6 py-4 relative overflow-hidden group"
+                >
+                  <span className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
+                  <Store size={20} />
+                  <span>Sign In / Register</span>
+                </motion.button>
+              </Link>
+            )}
+
+            {user && (
+              <Link to="/customer/dashboard">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass-button-secondary flex items-center gap-2 justify-center px-6 py-4"
+                >
+                  <Activity size={20} />
+                  <span>My Dashboard</span>
+                </motion.button>
+              </Link>
+            )}
+          </motion.div>
+
+          {/* Stats Row - Centered */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="grid grid-cols-4 gap-4 max-w-2xl mx-auto"
+          >
+            {stats.map((stat, index) => (
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6"
+                transition={{ delay: 0.5 + index * 0.1 }}
+                className="text-center"
               >
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span className="text-sm text-white/80 font-medium">Emergency Medicine Locator</span>
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                  <stat.icon size={18} className="text-primary-400" />
+                </div>
+                <div className="text-xl sm:text-2xl font-bold gradient-text">{stat.value}</div>
+                <div className="text-xs text-white/50">{stat.label}</div>
               </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
 
-              {/* Main Heading */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                Find{' '}
-                <span className="gradient-text bg-gradient-to-r from-primary-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Life-Saving
-                </span>
-                <br />
-                Medicines{' '}
-                <TypewriterText
-                  texts={['Instantly', 'Nearby', 'Now']}
-                  className="text-primary-400"
-                />
-              </h1>
-
-              {/* Powerful Quote */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="relative mb-8"
-              >
-                <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 via-primary-500 to-purple-500 rounded-full" />
-                <blockquote className="pl-6 py-2">
-                  <p className="text-xl sm:text-2xl font-medium text-white/90 italic">
-                    "No one should lose a life because they couldn't find a medicine in time."
-                  </p>
-                </blockquote>
-              </motion.div>
-
-              <p className="text-lg text-white/70 mb-8 max-w-lg">
-                In medical emergencies, every second counts. Our platform connects you to nearby pharmacies with the medicines you need — fast.
+      {/* SIGN IN CTA SECTION - Right after hero for visibility */}
+      {!user && (
+        <section className="py-8 px-4">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="p-8 rounded-2xl bg-gradient-to-r from-primary-500/20 via-purple-500/20 to-pink-500/20 border border-primary-500/30 text-center"
+            >
+              <span className="inline-block px-4 py-2 rounded-full bg-yellow-500/20 text-yellow-400 text-sm font-bold mb-4">
+                Step 1: Create an Account
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3">
+                <span className="gradient-text">Sign In</span> to Unlock Full Access
+              </h2>
+              <p className="text-white/60 mb-6 max-w-xl mx-auto">
+                Create a free account to save favorites, track medicine availability, and access all premium features
               </p>
+              <Link to="/auth">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-4 rounded-xl bg-gradient-to-r from-primary-500 to-purple-600 font-semibold text-lg flex items-center gap-2 mx-auto shadow-lg shadow-primary-500/25"
+                >
+                  <Sparkles size={20} />
+                  Sign In / Register Now
+                  <ArrowRight size={18} />
+                </motion.button>
+              </Link>
+              <p className="text-xs text-white/40 mt-3">Free forever • Takes 30 seconds</p>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Link to="/search">
-                  <motion.button
-                    whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(20, 184, 166, 0.4)' }}
-                    whileTap={{ scale: 0.98 }}
-                    className="glass-button flex items-center gap-3 w-full sm:w-auto justify-center text-lg px-8 py-4 relative overflow-hidden group"
-                  >
-                    <span className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-purple-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
-                    <Search size={24} />
-                    <span className="font-semibold">Find Medicine Now</span>
-                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                  </motion.button>
-                </Link>
+      {/* FOR CUSTOMERS & PHARMACIES SECTION */}
+      <section className="py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold mb-3">
+              Who is <span className="gradient-text">MediFind</span> For?
+            </h2>
+            <p className="text-white/60">Whether you're searching or selling, we're here for you</p>
+          </motion.div>
 
-                {user && (
-                  <Link to="/customer/dashboard">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* For Customers */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="glass-card p-8 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-6">
+                  <Search size={32} className="text-white" />
+                </div>
+                
+                <h3 className="text-2xl font-bold mb-2">For Customers</h3>
+                <p className="text-white/70 text-sm mb-4 italic">
+                  "Because every parent searching for their child's medicine at midnight deserves to find it."
+                </p>
+                
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Search medicines instantly across 500+ pharmacies',
+                    'Get GPS navigation to nearest stores',
+                    'Save favorite medicines & stores',
+                    'Set alerts for medicine availability',
+                    'Real-time stock updates — no more wasted trips',
+                  ].map((item, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="flex items-start gap-2 text-white/70 text-sm"
+                    >
+                      <CheckCircle2 size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                      {item}
+                    </motion.li>
+                  ))}
+                </ul>
+
+                {user ? (
+                  <Link to="/search">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="glass-button-secondary flex items-center gap-2 w-full sm:w-auto justify-center px-6 py-4"
+                      className="w-full glass-button flex items-center justify-center gap-2"
                     >
-                      <Activity size={20} />
-                      <span>My Dashboard</span>
+                      <Search size={18} />
+                      <span>Search Medicines</span>
+                    </motion.button>
+                  </Link>
+                ) : (
+                  <Link to="/auth">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full glass-button flex items-center justify-center gap-2"
+                    >
+                      <span>Sign In to Get Started</span>
+                      <ArrowRight size={18} />
                     </motion.button>
                   </Link>
                 )}
 
                 {!user && (
-                  <Link to="/auth">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="glass-button-secondary flex items-center gap-2 w-full sm:w-auto justify-center px-6 py-4 relative overflow-hidden group"
-                    >
-                      <span className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
-                      <Store size={20} />
-                      <span>Sign In / Register</span>
-                    </motion.button>
-                  </Link>
+                  <p className="text-center text-xs text-white/50 mt-3">
+                    Or <Link to="/search" className="text-primary-400 hover:underline">search without signing in</Link> (limited features)
+                  </p>
                 )}
-              </div>
-
-              {/* Quick Stats */}
-              <div className="grid grid-cols-4 gap-4">
-                {stats.map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + index * 0.1 }}
-                    className="text-center"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-2">
-                      <stat.icon size={18} className="text-primary-400" />
-                    </div>
-                    <div className="text-xl sm:text-2xl font-bold gradient-text">{stat.value}</div>
-                    <div className="text-xs text-white/50">{stat.label}</div>
-                  </motion.div>
-                ))}
               </div>
             </motion.div>
 
-            {/* Right Content - Interactive Card */}
+            {/* For Pharmacies */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative hidden lg:block"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="glass-card p-8 relative overflow-hidden group"
             >
-              <div className="relative">
-                {/* Main Demo Card */}
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  className="glass-card p-8 relative z-10"
-                >
-                  <div className="flex items-center gap-4 mb-6">
-                    <motion.div
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center"
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
+                  <Store size={32} className="text-white" />
+                </div>
+                
+                <h3 className="text-2xl font-bold mb-2">For Pharmacies</h3>
+                <p className="text-white/70 text-sm mb-4 italic">
+                  "You're not just selling medicines — you're the last hope for families in their darkest hour."
+                </p>
+                
+                <ul className="space-y-3 mb-6">
+                  {[
+                    'Register your pharmacy completely FREE',
+                    'Manage your medicine inventory easily',
+                    'Reach thousands of desperate customers nearby',
+                    'Get insights on what medicines people need',
+                    'Be a hero in your community — save lives daily',
+                  ].map((item, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="flex items-start gap-2 text-white/70 text-sm"
                     >
-                      <Pill size={32} className="text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="text-xl font-semibold">Emergency Search</h3>
-                      <p className="text-white/50">Find medicines instantly</p>
-                    </div>
-                  </div>
+                      <CheckCircle2 size={16} className="text-purple-400 mt-0.5 flex-shrink-0" />
+                      {item}
+                    </motion.li>
+                  ))}
+                </ul>
 
-                  <div className="space-y-4">
-                    {/* Search Demo */}
-                    <motion.div
-                      animate={{ boxShadow: ['0 0 0 0 rgba(20, 184, 166, 0)', '0 0 0 4px rgba(20, 184, 166, 0.1)', '0 0 0 0 rgba(20, 184, 166, 0)'] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="glass-input flex items-center gap-3"
-                    >
-                      <Search size={20} className="text-primary-400" />
-                      <span className="text-white/70">Paracetamol 500mg...</span>
-                    </motion.div>
+                <Link to="/auth?role=retailer">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full glass-button-secondary flex items-center justify-center gap-2 border-2 border-purple-500/30"
+                  >
+                    <Store size={18} />
+                    <span>Sign In / Register Pharmacy</span>
+                  </motion.button>
+                </Link>
 
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-2 text-green-400 text-sm"
-                    >
-                      <CheckCircle2 size={16} />
-                      <span>5 pharmacies found within 2km</span>
-                    </motion.div>
-
-                    <div className="space-y-2">
-                      {[
-                        { name: 'Apollo Pharmacy', distance: '0.5 km', stock: 'In Stock', storeId: '1' },
-                        { name: 'MedPlus Store', distance: '0.8 km', stock: 'In Stock', storeId: '2' },
-                        { name: 'Wellness Pharma', distance: '1.2 km', stock: 'Low Stock', storeId: '3' },
-                      ].map((store, i) => (
-                        <Link key={i} to="/search?q=Paracetamol">
-                          <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.5 + i * 0.1 }}
-                            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/20 to-purple-600/20 flex items-center justify-center">
-                                <Store size={18} className="text-primary-400" />
-                              </div>
-                              <div>
-                                <div className="font-medium text-sm group-hover:text-primary-400 transition-colors">{store.name}</div>
-                                <div className="text-xs text-white/50 flex items-center gap-1">
-                                  <MapPin size={10} />
-                                  {store.distance}
-                                </div>
-                              </div>
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded-full ${store.stock === 'In Stock' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                              {store.stock}
-                            </span>
-                          </motion.div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-
+                <p className="text-center text-xs text-white/50 mt-3">
+                  Join 500+ pharmacies already saving lives
+                </p>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
+      {/* EMERGENCY SEARCH DEMO SECTION */}
+      <section className="py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+              See How It <span className="gradient-text">Works</span>
+            </h2>
+            <p className="text-white/60">Experience the speed of finding medicines</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            whileHover={{ scale: 1.01 }}
+            className="glass-card p-8 relative"
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center"
+              >
+                <Pill size={32} className="text-white" />
+              </motion.div>
+              <div>
+                <h3 className="text-xl font-semibold">Emergency Search Demo</h3>
+                <p className="text-white/50">Find medicines in seconds</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Search Demo */}
+              <motion.div
+                animate={{ boxShadow: ['0 0 0 0 rgba(20, 184, 166, 0)', '0 0 0 4px rgba(20, 184, 166, 0.1)', '0 0 0 0 rgba(20, 184, 166, 0)'] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="glass-input flex items-center gap-3"
+              >
+                <Search size={20} className="text-primary-400" />
+                <span className="text-white/70">Paracetamol 500mg...</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 text-green-400 text-sm"
+              >
+                <CheckCircle2 size={16} />
+                <span>5 pharmacies found within 2km</span>
+              </motion.div>
+
+              <div className="space-y-2">
+                {[
+                  { name: 'Apollo Pharmacy', distance: '0.5 km', stock: 'In Stock' },
+                  { name: 'MedPlus Store', distance: '0.8 km', stock: 'In Stock' },
+                  { name: 'Wellness Pharma', distance: '1.2 km', stock: 'Low Stock' },
+                ].map((store, i) => (
+                  <Link key={i} to="/search?q=Paracetamol">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/20 to-purple-600/20 flex items-center justify-center">
+                          <Store size={18} className="text-primary-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm group-hover:text-primary-400 transition-colors">{store.name}</div>
+                          <div className="text-xs text-white/50 flex items-center gap-1">
+                            <MapPin size={10} />
+                            {store.distance}
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${store.stock === 'In Stock' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                        {store.stock}
+                      </span>
+                    </motion.div>
+                  </Link>
+                ))}
+              </div>
+              
+              <Link to="/search">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full glass-button flex items-center justify-center gap-2 mt-4"
+                >
+                  <span>Try It Yourself</span>
+                  <ArrowRight size={18} />
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Impact Quote Section */}
-      <section className="py-16 px-4 relative">
+      <section className="py-12 px-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -398,7 +573,7 @@ const CustomerHomePage = ({ user }) => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -442,7 +617,7 @@ const CustomerHomePage = ({ user }) => {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -489,189 +664,8 @@ const CustomerHomePage = ({ user }) => {
         </div>
       </section>
 
-      {/* For Users & Retailers Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="inline-block px-4 py-2 rounded-full bg-primary-500/20 text-primary-400 text-sm font-medium mb-4">
-              🎯 First Step: Create an Account
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              <span className="gradient-text">Sign In</span> to Unlock Full Access
-            </h2>
-            <p className="text-white/60 max-w-2xl mx-auto">
-              Create a free account to save favorites, track medicine availability, and get personalized features
-            </p>
-          </motion.div>
-
-          {/* Sign In CTA Banner */}
-          {!user && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary-500/20 via-purple-500/20 to-pink-500/20 border border-primary-500/30"
-            >
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary-500/30 flex items-center justify-center">
-                    <Sparkles className="text-primary-400" size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg">Start by Signing In!</h3>
-                    <p className="text-white/60 text-sm">It takes 30 seconds • Unlock all features free</p>
-                  </div>
-                </div>
-                <Link to="/auth">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-purple-600 font-semibold flex items-center gap-2 shadow-lg shadow-primary-500/25"
-                  >
-                    Sign In / Register
-                    <ArrowRight size={18} />
-                  </motion.button>
-                </Link>
-              </div>
-            </motion.div>
-          )}
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* For Users */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="glass-card p-8 relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              <div className="relative z-10">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-6">
-                  <Search size={32} className="text-white" />
-                </div>
-                
-                <h3 className="text-2xl font-bold mb-2">For Customers</h3>
-                <p className="text-white/50 text-sm mb-4">Search medicines and find nearby pharmacies</p>
-                
-                <ul className="space-y-3 mb-6">
-                  {[
-                    '🔍 Search medicines instantly across 500+ pharmacies',
-                    '📍 Get GPS navigation to nearest stores',
-                    '❤️ Save favorite medicines & stores (Sign in required)',
-                    '🔔 Set alerts for availability (Sign in required)',
-                    '⚡ Real-time stock updates',
-                  ].map((item, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                      className="text-white/70 text-sm"
-                    >
-                      {item}
-                    </motion.li>
-                  ))}
-                </ul>
-
-                {user ? (
-                  <Link to="/search">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full glass-button flex items-center justify-center gap-2"
-                    >
-                      <Search size={18} />
-                      <span>Search Medicines</span>
-                    </motion.button>
-                  </Link>
-                ) : (
-                  <Link to="/auth">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full glass-button flex items-center justify-center gap-2"
-                    >
-                      <span>Sign In to Get Started</span>
-                      <ArrowRight size={18} />
-                    </motion.button>
-                  </Link>
-                )}
-
-                {!user && (
-                  <p className="text-center text-xs text-white/50 mt-3">
-                    Or <Link to="/search" className="text-primary-400 hover:underline">search without signing in</Link> (limited features)
-                  </p>
-                )}
-              </div>
-            </motion.div>
-
-            {/* For Retailers */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="glass-card p-8 relative overflow-hidden group"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              <div className="relative z-10">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
-                  <Store size={32} className="text-white" />
-                </div>
-                
-                <h3 className="text-2xl font-bold mb-2">For Pharmacies</h3>
-                <p className="text-white/50 text-sm mb-4">Sign in to manage your store inventory</p>
-                
-                <ul className="space-y-3 mb-6">
-                  {[
-                    '🏪 Register your pharmacy for FREE',
-                    '📦 Manage your medicine inventory easily',
-                    '👥 Reach thousands of searching customers',
-                    '📈 Get analytics & customer insights',
-                    '🤝 Help save lives in your community',
-                  ].map((item, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                      className="text-white/70 text-sm"
-                    >
-                      {item}
-                    </motion.li>
-                  ))}
-                </ul>
-
-                <Link to="/auth?role=retailer">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full glass-button-secondary flex items-center justify-center gap-2 border-2 border-purple-500/30"
-                  >
-                    <Store size={18} />
-                    <span>Sign In / Register Pharmacy</span>
-                  </motion.button>
-                </Link>
-
-                <p className="text-center text-xs text-white/50 mt-3">
-                  ✨ Pharmacy owners must sign in to update inventory
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
-      <section className="py-16 px-4">
+      <section className="py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -739,24 +733,77 @@ const CustomerHomePage = ({ user }) => {
 // Pharmacy/Retailer Home Page Component
 const PharmacyHomePage = ({ user, profile }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [realStats, setRealStats] = useState({
+    totalMedicines: 0,
+    lowStockAlerts: 0,
+    totalStores: 0,
+  });
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real data from Supabase
+  useEffect(() => {
+    const fetchRealStats = async () => {
+      if (!user) return;
+
+      try {
+        // Fetch stores owned by this user
+        const { data: stores } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('owner_id', user.id);
+
+        if (stores && stores.length > 0) {
+          const storeIds = stores.map(s => s.id);
+
+          // Fetch all medicines for these stores
+          const { data: medicines } = await supabase
+            .from('medicines')
+            .select('*')
+            .in('store_id', storeIds);
+
+          const totalMedicines = medicines?.length || 0;
+          const lowStockMeds = medicines?.filter(m => m.quantity <= (m.min_stock_alert || 10)) || [];
+          
+          setRealStats({
+            totalMedicines,
+            lowStockAlerts: lowStockMeds.length,
+            totalStores: stores.length,
+          });
+          
+          setLowStockItems(lowStockMeds.slice(0, 3));
+        } else {
+          setRealStats({
+            totalMedicines: 0,
+            lowStockAlerts: 0,
+            totalStores: 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRealStats();
+  }, [user]);
 
   const quickStats = [
-    { label: 'Total Products', value: '1,247', icon: Package, color: 'from-blue-500 to-cyan-500' },
-    { label: 'Orders Today', value: '48', icon: TrendingUp, color: 'from-green-500 to-emerald-500' },
-    { label: 'Customer Visits', value: '892', icon: Users, color: 'from-purple-500 to-pink-500' },
-    { label: 'Revenue', value: '₹24.5K', icon: BarChart3, color: 'from-orange-500 to-red-500' },
+    { label: 'Total Medicines', value: loading ? '...' : realStats.totalMedicines.toLocaleString(), icon: Package, color: 'from-blue-500 to-cyan-500' },
+    { label: 'Total Stores', value: loading ? '...' : realStats.totalStores, icon: Store, color: 'from-green-500 to-emerald-500' },
+    { label: 'Low Stock Alerts', value: loading ? '...' : realStats.lowStockAlerts, icon: AlertCircle, color: 'from-orange-500 to-red-500' },
   ];
 
   const quickActions = [
     { title: 'Manage Inventory', description: 'Add or update medicines', icon: Package, link: '/retailer/inventory', color: 'from-blue-500 to-cyan-500' },
     { title: 'Store Settings', description: 'Update store details', icon: Store, link: '/retailer/stores', color: 'from-purple-500 to-pink-500' },
-    { title: 'View Analytics', description: 'Track performance', icon: BarChart3, link: '/retailer/dashboard', color: 'from-green-500 to-emerald-500' },
+    { title: 'View Dashboard', description: 'Full analytics & stats', icon: BarChart3, link: '/retailer/dashboard', color: 'from-green-500 to-emerald-500' },
   ];
 
   return (
     <div className="min-h-screen relative overflow-hidden">
       <AnimatedBackground />
-      <FloatingParticles />
 
       {/* Hero Section */}
       <section className="relative py-12 lg:py-20 px-4">
@@ -816,8 +863,8 @@ const PharmacyHomePage = ({ user, profile }) => {
             </div>
           </motion.div>
 
-          {/* Stats Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Stats Grid - Now with REAL data */}
+          <div className="grid sm:grid-cols-3 gap-4 mb-8">
             {quickStats.map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -831,7 +878,9 @@ const PharmacyHomePage = ({ user, profile }) => {
                   <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
                     <stat.icon size={20} className="text-white" />
                   </div>
-                  <TrendingUp size={16} className="text-green-400" />
+                  {stat.label === 'Low Stock Alerts' && realStats.lowStockAlerts > 0 && (
+                    <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  )}
                 </div>
                 <p className="text-2xl font-bold">{stat.value}</p>
                 <p className="text-sm text-white/50">{stat.label}</p>
@@ -901,7 +950,7 @@ const PharmacyHomePage = ({ user, profile }) => {
               </Link>
             </motion.div>
 
-            {/* Alerts */}
+            {/* Low Stock Alerts - Real data */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -914,16 +963,26 @@ const PharmacyHomePage = ({ user, profile }) => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Low Stock Alerts</h3>
-                  <p className="text-xs text-white/50">3 items need attention</p>
+                  <p className="text-xs text-white/50">
+                    {realStats.lowStockAlerts > 0 
+                      ? `${realStats.lowStockAlerts} items need attention` 
+                      : 'All stock levels good!'}
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">
-                {['Paracetamol 500mg', 'Insulin Glargine', 'Amoxicillin'].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
-                    <span>{item}</span>
-                    <span className="text-yellow-400 text-xs">Low Stock</span>
+                {lowStockItems.length > 0 ? (
+                  lowStockItems.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-sm">
+                      <span className="truncate">{item.name}</span>
+                      <span className="text-yellow-400 text-xs flex-shrink-0 ml-2">{item.quantity} left</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-white/50 text-sm py-4">
+                    {loading ? 'Loading...' : 'No low stock items'}
                   </div>
-                ))}
+                )}
               </div>
             </motion.div>
           </div>

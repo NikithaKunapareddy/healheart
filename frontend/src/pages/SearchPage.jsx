@@ -634,16 +634,16 @@ const SearchPage = () => {
                                   : 'border-transparent hover:border-white/20'
                             }`}
                           >
-                            {/* Crown badge for nearest - positioned on top-left corner of card */}
+                            {/* Crown badge for nearest - tilted cross format sitting on top corner */}
                             {index === 0 && (
                               <motion.div
-                                initial={{ scale: 0, rotate: -20 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                className="absolute -top-3 -left-2 z-10"
+                                initial={{ scale: 0, rotate: -30 }}
+                                animate={{ scale: 1, rotate: -12 }}
+                                className="absolute -top-4 -left-3 z-10"
                               >
-                                <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full px-3 py-1 flex items-center gap-1 shadow-lg">
-                                  <span className="text-sm">👑</span>
-                                  <span className="text-xs font-bold text-white">NEAREST</span>
+                                <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-xl shadow-yellow-500/30 transform">
+                                  <span className="text-base">👑</span>
+                                  <span className="text-xs font-black text-white tracking-wide">NEAREST</span>
                                 </div>
                               </motion.div>
                             )}
