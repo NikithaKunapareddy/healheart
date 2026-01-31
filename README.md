@@ -12,7 +12,7 @@
 
 ---
 
-## 😢 The Problem That Breaks Hearts
+## The Problem That Breaks Hearts
 
 > **"Imagine a father running from pharmacy to pharmacy at 2 AM, desperately searching for his daughter's asthma inhaler while she struggles to breathe. Imagine a mother watching her child burn with fever, calling store after store, only to hear 'out of stock.' These aren't rare stories — they happen every single night across India.**
 >
@@ -20,7 +20,7 @@
 
 ---
 
-## 💔 Problem Statement
+## Problem Statement
 
 ### The Crisis
 - **Every 5 minutes**, someone in India loses a loved one because they couldn't find a medicine in time
