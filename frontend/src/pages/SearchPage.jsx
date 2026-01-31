@@ -626,32 +626,61 @@ const SearchPage = () => {
                             transition={{ delay: index * 0.05 }}
                             whileHover={{ scale: 1.01, x: 5 }}
                             onClick={() => handleResultClick(result)}
-                            className={`glass-card p-4 cursor-pointer transition-all border-2 ${
+                            className={`glass-card p-4 cursor-pointer transition-all border-2 relative ${
                               selectedResult?.id === result.id
                                 ? 'border-primary-500 bg-primary-500/10'
-                                : 'border-transparent hover:border-white/20'
+                                : index === 0 
+                                  ? 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500'
+                                  : 'border-transparent hover:border-white/20'
                             }`}
                           >
+                            {/* Crown badge for nearest - positioned on top-left corner of card */}
+                            {index === 0 && (
+                              <motion.div
+                                initial={{ scale: 0, rotate: -20 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                className="absolute -top-3 -left-2 z-10"
+                              >
+                                <div className="bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full px-3 py-1 flex items-center gap-1 shadow-lg">
+                                  <span className="text-sm">👑</span>
+                                  <span className="text-xs font-bold text-white">NEAREST</span>
+                                </div>
+                              </motion.div>
+                            )}
+                            
                             <div className="flex gap-4">
-                              {/* Index Badge */}
+                              {/* Index Badge - Simple number */}
                               <div className="flex flex-col items-center">
                                 <motion.div
                                   whileHover={{ scale: 1.1, rotate: 10 }}
-                                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-sm font-bold"
+                                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
+                                    index === 0 
+                                      ? 'bg-gradient-to-br from-yellow-500 to-amber-600' 
+                                      : 'bg-gradient-to-br from-primary-500 to-purple-600'
+                                  }`}
                                 >
                                   {index + 1}
                                 </motion.div>
-                                <div className="w-0.5 h-full bg-gradient-to-b from-primary-500/50 to-transparent mt-2" />
+                                <div className={`w-0.5 h-full bg-gradient-to-b ${index === 0 ? 'from-yellow-500/50' : 'from-primary-500/50'} to-transparent mt-2`} />
                               </div>
 
                               {/* Medicine & Store Info */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                       <h3 className="font-semibold text-lg truncate">
                                         {result.name}
                                       </h3>
+                                      {index === 0 && (
+                                        <motion.span
+                                          initial={{ scale: 0 }}
+                                          animate={{ scale: 1 }}
+                                          className="px-2 py-0.5 text-xs rounded-full bg-yellow-500/20 text-yellow-400 font-semibold"
+                                        >
+                                          🏆 Best Match
+                                        </motion.span>
+                                      )}
                                       {result.quantity > 10 && (
                                         <motion.span
                                           initial={{ scale: 0 }}
@@ -678,15 +707,25 @@ const SearchPage = () => {
                                   </motion.div>
                                 </div>
 
-                                {/* Stats Row */}
-                                <div className="mt-3 flex items-center gap-4 text-sm text-white/70">
+                                {/* Stats Row with better distance formatting */}
+                                <div className="mt-3 flex items-center gap-3 text-sm text-white/70 flex-wrap">
                                   <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5">
                                     <Package size={14} className="text-primary-400" />
                                     {result.quantity} units
                                   </span>
-                                  <span className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5">
-                                    <Navigation size={14} className="text-blue-400" />
-                                    {result.distance_km} km
+                                  <span className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium ${
+                                    index === 0 
+                                      ? 'bg-yellow-500/20 text-yellow-400' 
+                                      : result.distance_km < 2 
+                                        ? 'bg-green-500/20 text-green-400'
+                                        : result.distance_km < 5
+                                          ? 'bg-blue-500/20 text-blue-400'
+                                          : 'bg-orange-500/20 text-orange-400'
+                                  }`}>
+                                    <Navigation size={14} />
+                                    {result.distance_km < 1 
+                                      ? `${Math.round(result.distance_km * 1000)}m away`
+                                      : `${result.distance_km.toFixed(1)} km away`}
                                   </span>
                                 </div>
 

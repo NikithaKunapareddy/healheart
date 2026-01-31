@@ -127,22 +127,27 @@ const RetailerDashboard = () => {
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Welcome Section */}
+        {/* Dashboard Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back,{' '}
-            <span className="gradient-text">
-              {profile?.full_name?.split(' ')[0] || 'Retailer'}
-            </span>
-            !
-          </h1>
-          <p className="text-white/60">
-            Manage your stores and inventory from one place.
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">
+              <span className="gradient-text">Dashboard</span>
+            </h1>
+            <p className="text-white/60">
+              Welcome, <span className="font-medium text-white">{profile?.full_name || 'Retailer'}</span> • Manage your stores and inventory
+            </p>
+          </div>
+          <button
+            onClick={fetchDashboardData}
+            className="glass-button flex items-center gap-2 self-start"
+          >
+            <TrendingUp size={16} />
+            <span>Refresh Stats</span>
+          </button>
         </motion.div>
 
         {/* Stats Grid */}

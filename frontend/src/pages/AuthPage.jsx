@@ -21,6 +21,7 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('customer');
+  const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -32,25 +33,38 @@ const AuthPage = () => {
   const { login, register } = useAuthStore();
   const navigate = useNavigate();
 
+  // Clear error when form changes
   const handleChange = (e) => {
+    setError('');
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setError('');
 
-    // Set a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      setLoading(false);
-      toast.error('Request is taking too long. Please try again.');
-    }, 15000);
+    // Basic validation before loading
+    if (!formData.email || !formData.password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
+    if (!isLogin && !formData.fullName) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       if (isLogin) {
         // Pass selectedRole to login for role verification
         await login(formData.email, formData.password, selectedRole);
-        clearTimeout(loadingTimeout);
         toast.success('Welcome back!');
         
         // Navigate based on selected role
@@ -67,7 +81,6 @@ const AuthPage = () => {
           selectedRole,
           formData.phone
         );
-        clearTimeout(loadingTimeout);
         toast.success('Account created successfully!');
         
         // Navigate based on selected role
@@ -77,9 +90,9 @@ const AuthPage = () => {
           navigate('/customer/dashboard');
         }
       }
-    } catch (error) {
-      clearTimeout(loadingTimeout);
-      toast.error(error.message || 'Authentication failed');
+    } catch (err) {
+      // Show error immediately inline
+      setError(err.message || 'Invalid email or password. Please try again.');
       setLoading(false);
     }
   };
@@ -187,6 +200,25 @@ const AuthPage = () => {
               </motion.button>
             </div>
           </motion.div>
+
+          {/* Error Message - Inline Display */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-4 rounded-xl bg-red-500/20 border border-red-500/50 mb-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-red-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-red-400">✕</span>
+                  </div>
+                  <p className="text-red-400 text-sm font-medium">{error}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

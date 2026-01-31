@@ -15,13 +15,13 @@ import {
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-const Chatbot = ({ onMedicineSearch }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const Chatbot = ({ onMedicineSearch, initialQuery = null, isOpenExternal = false, onClose }) => {
+  const [isOpen, setIsOpen] = useState(isOpenExternal);
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: 'bot',
-      text: "Hi! 👋 I'm your medicine assistant. Ask me about any medicine, symptoms, or health queries. I can also help you find nearby pharmacies!",
+      text: "Hi! 👋 I'm MedAssist AI, your comprehensive health assistant. Ask me about any medicine, symptoms, health tips, diet, skincare, haircare, or medical treatments. I'm here to help!",
       timestamp: new Date(),
     },
   ]);
@@ -44,18 +44,54 @@ const Chatbot = ({ onMedicineSearch }) => {
     }
   }, [isOpen]);
 
+  // Handle external open/close
+  useEffect(() => {
+    setIsOpen(isOpenExternal);
+  }, [isOpenExternal]);
+
+  // Handle initial query (when clicking on a saved medicine)
+  useEffect(() => {
+    if (initialQuery && isOpen) {
+      // Auto-send the initial query about the medicine
+      const autoQuery = `Tell me everything about ${initialQuery} medicine - what it's used for, dosage, side effects, precautions, and alternatives.`;
+      setInput('');
+      handleAutoSend(autoQuery);
+    }
+  }, [initialQuery, isOpen]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    if (onClose) onClose();
+  };
+
   const generateGeminiResponse = async (userMessage) => {
-    const systemPrompt = `You are a helpful medicine assistant for an Emergency Medicine Locator app. Your role is to:
-1. Answer questions about medicines, their uses, dosages, and side effects
-2. Provide general health information (always recommend consulting a doctor for serious issues)
-3. Help users understand what medicine they might need for common symptoms
-4. When users ask about finding medicine or pharmacies, suggest they use the search feature
+    const systemPrompt = `You are MedAssist AI, a comprehensive health and medicine assistant for the MediFind Emergency Medicine Locator app. 
 
-Keep responses concise, helpful, and friendly. Use emojis sparingly for warmth.
-If a user mentions a specific medicine name, highlight it so they can search for it.
-Always remind users to consult healthcare professionals for medical advice.
+YOUR CAPABILITIES:
+1. **Medicines & Drugs**: Explain uses, dosages, side effects, interactions, alternatives for ALL medicines - from common painkillers to specialized medications
+2. **Symptoms & Conditions**: Help identify what medicine might be needed for various symptoms
+3. **Diet & Nutrition**: Provide dietary advice for health conditions, weight management, and general wellness
+4. **Skincare**: Advise on skincare routines, acne treatments, serums, moisturizers, and dermatological products
+5. **Haircare**: Help with hair loss treatments (like Minoxidil), hair growth serums, dandruff solutions
+6. **Supplements & Vitamins**: Explain benefits, dosages, and when to take supplements
+7. **Medical Procedures**: Provide basic information about surgeries, treatments, and recovery
+8. **Health Tips**: Offer preventive health advice and lifestyle recommendations
 
-Format medicine names in **bold** when mentioning them.`;
+RESPONSE STYLE:
+- Be CONCISE and TO THE POINT - no unnecessary fluff
+- Use bullet points for clarity
+- Highlight important warnings in bold
+- Keep responses under 150 words unless detailed info is requested
+- Use simple terms anyone can understand
+- Always include a brief disclaimer when appropriate
+
+FORMAT MEDICINE NAMES:
+- Always write medicine names in **bold** format like **Paracetamol**
+
+IMPORTANT:
+- For serious symptoms, always recommend consulting a doctor
+- Never diagnose conditions - only provide information
+- Mention common brand names when relevant for India market`;
 
     try {
       const response = await fetch(
@@ -105,6 +141,34 @@ Format medicine names in **bold** when mentioning them.`;
     return matches.map((m) => m[1]);
   };
 
+  const handleAutoSend = async (query) => {
+    // Add user message
+    const newUserMessage = {
+      id: Date.now(),
+      type: 'user',
+      text: query,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, newUserMessage]);
+    setIsLoading(true);
+
+    // Get Gemini response
+    const botResponse = await generateGeminiResponse(query);
+
+    // Extract medicine names for quick search buttons
+    const medicines = extractMedicineName(botResponse);
+
+    const newBotMessage = {
+      id: Date.now() + 1,
+      type: 'bot',
+      text: botResponse,
+      timestamp: new Date(),
+      medicines: medicines.length > 0 ? medicines : null,
+    };
+    setMessages((prev) => [...prev, newBotMessage]);
+    setIsLoading(false);
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -148,7 +212,7 @@ Format medicine names in **bold** when mentioning them.`;
   const handleMedicineClick = (medicine) => {
     if (onMedicineSearch) {
       onMedicineSearch(medicine);
-      setIsOpen(false);
+      handleClose();
     }
   };
 
@@ -168,7 +232,7 @@ Format medicine names in **bold** when mentioning them.`;
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Always visible */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -197,7 +261,7 @@ Format medicine names in **bold** when mentioning them.`;
               className="absolute right-full mr-3 px-3 py-2 bg-slate-800 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Sparkles size={14} className="inline mr-1 text-yellow-400" />
-              Ask about medicines
+              Health Assistant
             </motion.div>
           </motion.button>
         )}
@@ -233,14 +297,14 @@ Format medicine names in **bold** when mentioning them.`;
                     <h3 className="font-semibold text-white">MedAssist AI</h3>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-xs text-white/60">Online</span>
+                      <span className="text-xs text-white/60">Online • Ask anything!</span>
                     </div>
                   </div>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="p-2 rounded-full hover:bg-white/10 transition-colors"
                 >
                   <X size={20} className="text-white/70" />
@@ -338,7 +402,7 @@ Format medicine names in **bold** when mentioning them.`;
             {/* Quick Actions */}
             <div className="px-4 py-2 border-t border-white/5">
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {['What is Paracetamol?', 'Headache medicine', 'Find pharmacies'].map(
+                {['Diet for diabetes', 'Hairfall remedies', 'Acne treatment', 'Immunity tips'].map(
                   (suggestion, i) => (
                     <motion.button
                       key={i}

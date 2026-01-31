@@ -190,18 +190,20 @@ const MedicineMap = ({
     stores.forEach((store, index) => {
       const storeProps = getStoreProps(store);
       const position = { lat: storeProps.latitude, lng: storeProps.longitude };
+      const isNearest = index === 0; // First store is nearest (already sorted by distance)
 
-      // Custom marker with animation
+      // Custom marker with animation - crown for nearest
       const marker = new window.google.maps.Marker({
         position,
         map: mapInstanceRef.current,
         icon: {
-          url: createCustomMarkerSVG(storeProps.isOpen, index + 1),
-          scaledSize: new window.google.maps.Size(50, 60),
-          anchor: new window.google.maps.Point(25, 60),
+          url: createCustomMarkerSVG(storeProps.isOpen, index + 1, isNearest),
+          scaledSize: isNearest ? new window.google.maps.Size(65, 90) : new window.google.maps.Size(50, 60),
+          anchor: isNearest ? new window.google.maps.Point(32, 90) : new window.google.maps.Point(25, 60),
         },
         animation: window.google.maps.Animation.DROP,
-        title: storeProps.name,
+        title: isNearest ? `👑 NEAREST: ${storeProps.name}` : storeProps.name,
+        zIndex: isNearest ? 1000 : 100 - index, // Nearest on top
       });
 
       marker.addListener('click', () => {
@@ -229,19 +231,42 @@ const MedicineMap = ({
     }
   }, [stores, isLoaded, normalizedUserLocation]);
 
-  // Create custom marker SVG
-  const createCustomMarkerSVG = (isOpen, number) => {
+  // Create custom marker SVG with crown for nearest store
+  const createCustomMarkerSVG = (isOpen, number, isNearest = false) => {
     const color = isOpen ? '#10B981' : '#EF4444';
+    const size = isNearest ? 65 : 50;
+    const viewBox = isNearest ? '0 0 65 75' : '0 0 50 60';
+    
+    // Crown SVG for nearest store
+    const crownSvg = isNearest ? `
+      <g transform="translate(12, -5)">
+        <polygon points="20,0 25,12 40,12 28,20 32,32 20,24 8,32 12,20 0,12 15,12" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+        <text x="20" y="22" text-anchor="middle" font-size="8" font-weight="bold" fill="#7C2D12">★</text>
+      </g>
+    ` : '';
+    
+    const markerY = isNearest ? 30 : 0;
+    
     const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="50" height="60" viewBox="0 0 50 60">
+      <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${isNearest ? 90 : 60}" viewBox="${viewBox}">
         <defs>
           <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
             <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
           </filter>
+          ${isNearest ? `<filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>` : ''}
         </defs>
-        <path d="M25 0C11.2 0 0 11.2 0 25c0 17.5 25 35 25 35s25-17.5 25-35C50 11.2 38.8 0 25 0z" fill="${color}" filter="url(#shadow)"/>
-        <circle cx="25" cy="23" r="15" fill="white"/>
-        <text x="25" y="28" text-anchor="middle" font-size="14" font-weight="bold" fill="${color}">${number}</text>
+        ${crownSvg}
+        <g transform="translate(${isNearest ? 7.5 : 0}, ${markerY})">
+          <path d="M25 0C11.2 0 0 11.2 0 25c0 17.5 25 35 25 35s25-17.5 25-35C50 11.2 38.8 0 25 0z" fill="${color}" filter="url(#${isNearest ? 'glow' : 'shadow'})"/>
+          <circle cx="25" cy="23" r="15" fill="white"/>
+          <text x="25" y="28" text-anchor="middle" font-size="14" font-weight="bold" fill="${color}">${number}</text>
+        </g>
       </svg>
     `;
     return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);

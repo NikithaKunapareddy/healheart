@@ -226,10 +226,11 @@ const CustomerHomePage = ({ user }) => {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="glass-button-secondary flex items-center gap-2 w-full sm:w-auto justify-center px-6 py-4"
+                      className="glass-button-secondary flex items-center gap-2 w-full sm:w-auto justify-center px-6 py-4 relative overflow-hidden group"
                     >
+                      <span className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
                       <Store size={20} />
-                      <span>Register Pharmacy</span>
+                      <span>Sign In / Register</span>
                     </motion.button>
                   </Link>
                 )}
@@ -304,62 +305,39 @@ const CustomerHomePage = ({ user }) => {
 
                     <div className="space-y-2">
                       {[
-                        { name: 'Apollo Pharmacy', distance: '0.5 km', stock: 'In Stock' },
-                        { name: 'MedPlus Store', distance: '0.8 km', stock: 'In Stock' },
-                        { name: 'Wellness Pharma', distance: '1.2 km', stock: 'Low Stock' },
+                        { name: 'Apollo Pharmacy', distance: '0.5 km', stock: 'In Stock', storeId: '1' },
+                        { name: 'MedPlus Store', distance: '0.8 km', stock: 'In Stock', storeId: '2' },
+                        { name: 'Wellness Pharma', distance: '1.2 km', stock: 'Low Stock', storeId: '3' },
                       ].map((store, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.5 + i * 0.1 }}
-                          className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/20 to-purple-600/20 flex items-center justify-center">
-                              <Store size={18} className="text-primary-400" />
-                            </div>
-                            <div>
-                              <div className="font-medium text-sm">{store.name}</div>
-                              <div className="text-xs text-white/50 flex items-center gap-1">
-                                <MapPin size={10} />
-                                {store.distance}
+                        <Link key={i} to="/search?q=Paracetamol">
+                          <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.5 + i * 0.1 }}
+                            className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/20 to-purple-600/20 flex items-center justify-center">
+                                <Store size={18} className="text-primary-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm group-hover:text-primary-400 transition-colors">{store.name}</div>
+                                <div className="text-xs text-white/50 flex items-center gap-1">
+                                  <MapPin size={10} />
+                                  {store.distance}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <span className={`text-xs px-2 py-1 rounded-full ${store.stock === 'In Stock' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                            {store.stock}
-                          </span>
-                        </motion.div>
+                            <span className={`text-xs px-2 py-1 rounded-full ${store.stock === 'In Stock' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                              {store.stock}
+                            </span>
+                          </motion.div>
+                        </Link>
                       ))}
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Floating Elements */}
-                <motion.div
-                  animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                  className="absolute -top-8 -right-8 w-20 h-20 rounded-2xl glass flex items-center justify-center"
-                >
-                  <Zap size={32} className="text-yellow-400" />
-                </motion.div>
-
-                <motion.div
-                  animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
-                  transition={{ duration: 5, repeat: Infinity }}
-                  className="absolute -bottom-4 -left-4 w-16 h-16 rounded-2xl glass flex items-center justify-center z-0"
-                >
-                  <Heart size={24} className="text-red-500" />
-                </motion.div>
-
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute top-1/2 -right-12 w-14 h-14 rounded-full glass flex items-center justify-center"
-                >
-                  <Globe size={20} className="text-cyan-400" />
-                </motion.div>
               </div>
             </motion.div>
           </div>
@@ -507,6 +485,187 @@ const CustomerHomePage = ({ user }) => {
                 )}
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* For Users & Retailers Section */}
+      <section className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <span className="inline-block px-4 py-2 rounded-full bg-primary-500/20 text-primary-400 text-sm font-medium mb-4">
+              🎯 First Step: Create an Account
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              <span className="gradient-text">Sign In</span> to Unlock Full Access
+            </h2>
+            <p className="text-white/60 max-w-2xl mx-auto">
+              Create a free account to save favorites, track medicine availability, and get personalized features
+            </p>
+          </motion.div>
+
+          {/* Sign In CTA Banner */}
+          {!user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-primary-500/20 via-purple-500/20 to-pink-500/20 border border-primary-500/30"
+            >
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary-500/30 flex items-center justify-center">
+                    <Sparkles className="text-primary-400" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">Start by Signing In!</h3>
+                    <p className="text-white/60 text-sm">It takes 30 seconds • Unlock all features free</p>
+                  </div>
+                </div>
+                <Link to="/auth">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-purple-600 font-semibold flex items-center gap-2 shadow-lg shadow-primary-500/25"
+                  >
+                    Sign In / Register
+                    <ArrowRight size={18} />
+                  </motion.button>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* For Users */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="glass-card p-8 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-6">
+                  <Search size={32} className="text-white" />
+                </div>
+                
+                <h3 className="text-2xl font-bold mb-2">For Customers</h3>
+                <p className="text-white/50 text-sm mb-4">Search medicines and find nearby pharmacies</p>
+                
+                <ul className="space-y-3 mb-6">
+                  {[
+                    '🔍 Search medicines instantly across 500+ pharmacies',
+                    '📍 Get GPS navigation to nearest stores',
+                    '❤️ Save favorite medicines & stores (Sign in required)',
+                    '🔔 Set alerts for availability (Sign in required)',
+                    '⚡ Real-time stock updates',
+                  ].map((item, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="text-white/70 text-sm"
+                    >
+                      {item}
+                    </motion.li>
+                  ))}
+                </ul>
+
+                {user ? (
+                  <Link to="/search">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full glass-button flex items-center justify-center gap-2"
+                    >
+                      <Search size={18} />
+                      <span>Search Medicines</span>
+                    </motion.button>
+                  </Link>
+                ) : (
+                  <Link to="/auth">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full glass-button flex items-center justify-center gap-2"
+                    >
+                      <span>Sign In to Get Started</span>
+                      <ArrowRight size={18} />
+                    </motion.button>
+                  </Link>
+                )}
+
+                {!user && (
+                  <p className="text-center text-xs text-white/50 mt-3">
+                    Or <Link to="/search" className="text-primary-400 hover:underline">search without signing in</Link> (limited features)
+                  </p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* For Retailers */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="glass-card p-8 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative z-10">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-6">
+                  <Store size={32} className="text-white" />
+                </div>
+                
+                <h3 className="text-2xl font-bold mb-2">For Pharmacies</h3>
+                <p className="text-white/50 text-sm mb-4">Sign in to manage your store inventory</p>
+                
+                <ul className="space-y-3 mb-6">
+                  {[
+                    '🏪 Register your pharmacy for FREE',
+                    '📦 Manage your medicine inventory easily',
+                    '👥 Reach thousands of searching customers',
+                    '📈 Get analytics & customer insights',
+                    '🤝 Help save lives in your community',
+                  ].map((item, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="text-white/70 text-sm"
+                    >
+                      {item}
+                    </motion.li>
+                  ))}
+                </ul>
+
+                <Link to="/auth?role=retailer">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full glass-button-secondary flex items-center justify-center gap-2 border-2 border-purple-500/30"
+                  >
+                    <Store size={18} />
+                    <span>Sign In / Register Pharmacy</span>
+                  </motion.button>
+                </Link>
+
+                <p className="text-center text-xs text-white/50 mt-3">
+                  ✨ Pharmacy owners must sign in to update inventory
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
