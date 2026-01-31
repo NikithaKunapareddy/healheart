@@ -23,10 +23,11 @@ import {
   ArrowRight,
   CheckCircle,
   Heart,
+  HeartOff,
 } from 'lucide-react';
 import useLocationStore from '../store/locationStore';
 import useAuthStore from '../store/authStore';
-import { searchMedicines, logSearch } from '../lib/supabase';
+import { searchMedicines, logSearch, addFavoriteMedicine, removeFavoriteMedicine, isMedicineFavorite } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import MedicineMap from '../components/MedicineMap';
 
@@ -84,12 +85,59 @@ const SearchPage = () => {
   const [viewMode, setViewMode] = useState('split'); // 'split', 'map', 'list'
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [animatingSearch, setAnimatingSearch] = useState(false);
+  const [favorites, setFavorites] = useState({}); // Track favorite medicine IDs
   const searchInputRef = useRef(null);
   const controls = useAnimation();
   const initialSearchDone = useRef(false);
 
   const { userLocation, getUserLocation, isLocating, locationError } = useLocationStore();
   const { user } = useAuthStore();
+
+  // Toggle favorite medicine
+  const toggleFavorite = async (medicine) => {
+    if (!user) {
+      toast.error('Please sign in to save favorites');
+      return;
+    }
+
+    const medicineId = medicine.id;
+    const isFav = favorites[medicineId];
+
+    try {
+      if (isFav) {
+        await removeFavoriteMedicine(user.id, medicineId);
+        setFavorites(prev => {
+          const newFavs = { ...prev };
+          delete newFavs[medicineId];
+          return newFavs;
+        });
+        toast.success('Removed from favorites');
+      } else {
+        await addFavoriteMedicine(user.id, medicineId, medicine.name);
+        setFavorites(prev => ({ ...prev, [medicineId]: true }));
+        toast.success('Added to favorites! ❤️');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  // Check favorites when results change
+  useEffect(() => {
+    const checkFavorites = async () => {
+      if (!user || results.length === 0) return;
+      
+      const favStatus = {};
+      for (const result of results) {
+        const isFav = await isMedicineFavorite(user.id, result.id);
+        if (isFav) favStatus[result.id] = true;
+      }
+      setFavorites(favStatus);
+    };
+    
+    checkFavorites();
+  }, [results, user]);
 
   // Get user location on mount
   useEffect(() => {
@@ -176,11 +224,6 @@ const SearchPage = () => {
       return;
     }
 
-    if (!userLocation) {
-      toast.error('Please enable location access');
-      return;
-    }
-
     // Trigger search animation
     setAnimatingSearch(true);
     await controls.start({
@@ -195,33 +238,37 @@ const SearchPage = () => {
     setShowSuggestions(false);
 
     try {
+      // Get user location or use default (India center)
+      const lat = userLocation?.lat || 20.5937;
+      const lng = userLocation?.lng || 78.9629;
+      
       const searchResults = await searchMedicines(
         query,
-        userLocation.lat,
-        userLocation.lng,
+        lat,
+        lng,
         radius
       );
 
-      setResults(searchResults);
+      setResults(searchResults || []);
 
-      if (user) {
+      if (user && searchResults) {
         await logSearch(
           user.id,
           query,
-          userLocation.lat,
-          userLocation.lng,
+          lat,
+          lng,
           searchResults.length
         );
       }
 
-      if (searchResults.length === 0) {
+      if (!searchResults || searchResults.length === 0) {
         toast('No medicines found nearby', { icon: '🔍' });
       } else {
-        toast.success(`Found ${searchResults.length} pharmacies with ${query}`);
+        toast.success(`Found ${searchResults.length} result${searchResults.length > 1 ? 's' : ''} for "${query}"`);
       }
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Search failed. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
       setAnimatingSearch(false);
@@ -292,93 +339,55 @@ const SearchPage = () => {
       <ParticleField />
       
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header with animated gradient */}
+        {/* Compact Header with Quote */}
         <motion.div
-          initial={{ opacity: 0, y: -30 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="text-center mb-8"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-6"
         >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary-500/20 to-purple-600/20 border border-primary-500/30 mb-4"
-          >
-            <Sparkles size={16} className="text-primary-400 animate-pulse" />
-            <span className="text-sm font-medium text-primary-300">AI-Powered Search</span>
-          </motion.div>
-          
           <motion.h1 
-            className="text-4xl sm:text-5xl font-bold mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            className="text-2xl sm:text-3xl font-bold mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
           >
-            Find{' '}
-            <span className="relative inline-block">
-              <span className="gradient-text">Medicines</span>
-              <motion.span
-                className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              />
-            </span>{' '}
-            Near You
+            Find <span className="gradient-text">Medicines</span> Near You
           </motion.h1>
           
           <motion.p 
-            className="text-white/60 max-w-2xl mx-auto text-lg"
+            className="text-white/50 text-sm italic"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.2 }}
           >
-            Search any medicine and discover nearby pharmacies with real-time stock availability
+            "Every second counts when lives are at stake"
           </motion.p>
         </motion.div>
 
-        {/* Search Form */}
+        {/* Compact Search Form */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="relative mb-8"
+          transition={{ delay: 0.1 }}
+          className="relative mb-6"
         >
           <motion.div
             animate={controls}
-            className="glass-card p-6 relative overflow-hidden"
+            className="glass-card p-4 relative overflow-hidden"
           >
-            {/* Animated border gradient */}
-            <motion.div
-              className="absolute inset-0 rounded-2xl opacity-50"
-              style={{
-                background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent)',
-                backgroundSize: '200% 100%',
-              }}
-              animate={{
-                backgroundPosition: ['200% 0', '-200% 0'],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-            />
-
-            <form onSubmit={handleSearch} className="relative space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4">
+            <form onSubmit={handleSearch} className="relative">
+              <div className="flex flex-col sm:flex-row gap-3">
                 {/* Search Input with suggestions */}
-                <div className="relative flex-[3] min-w-0">
+                <div className="relative flex-1 min-w-0">
                   <motion.div
-                    className="absolute left-4 top-1/2 -translate-y-1/2"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-10"
                     animate={loading ? { rotate: 360 } : {}}
                     transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: 'linear' }}
                   >
                     {loading ? (
-                      <Loader2 size={20} className="text-primary-400" />
+                      <Loader2 size={18} className="text-primary-400" />
                     ) : (
-                      <Search size={20} className="text-white/50" />
+                      <Search size={18} className="text-white/50" />
                     )}
                   </motion.div>
                   
@@ -389,30 +398,31 @@ const SearchPage = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    placeholder="Search for medicines..."
-                    className="glass-input pl-12 pr-4 text-lg h-14 w-full min-w-0"
+                    placeholder="Search for Paracetamol, Insulin, Aspirin..."
+                    className="glass-input pl-10 pr-4 h-12 w-full text-base"
                   />
 
-                  {/* Search suggestions dropdown */}
+                  {/* Search suggestions dropdown - positioned better */}
                   <AnimatePresence>
                     {showSuggestions && !searched && (
                       <motion.div
-                        initial={{ opacity: 0, y: -10 }}
+                        initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute top-full left-0 right-0 mt-2 glass-card p-3 z-50"
+                        exit={{ opacity: 0, y: 5 }}
+                        className="absolute top-full left-0 right-0 mt-2 glass-card p-3 z-50 shadow-xl"
+                        style={{ maxHeight: '200px', overflowY: 'auto' }}
                       >
-                        <p className="text-xs text-white/50 mb-2 px-2">Popular searches</p>
+                        <p className="text-xs text-white/50 mb-2 px-1">Popular searches</p>
                         <div className="flex flex-wrap gap-2">
                           {searchSuggestions.map((suggestion, index) => (
                             <motion.button
                               key={suggestion}
                               type="button"
-                              initial={{ opacity: 0, scale: 0.8 }}
+                              initial={{ opacity: 0, scale: 0.9 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: index * 0.05 }}
+                              transition={{ delay: index * 0.03 }}
                               onClick={() => handleSuggestionClick(suggestion)}
-                              className="px-3 py-1.5 rounded-full bg-white/10 text-sm hover:bg-primary-500/30 transition-all hover:scale-105"
+                              className="px-3 py-1.5 rounded-full bg-white/10 text-sm hover:bg-primary-500/30 transition-all hover:scale-105 border border-white/5"
                             >
                               {suggestion}
                             </motion.button>
@@ -423,125 +433,68 @@ const SearchPage = () => {
                   </AnimatePresence>
                 </div>
 
-                {/* Filter Button */}
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`glass-button-secondary h-14 px-6 flex items-center gap-2 justify-center ${
-                    showFilters ? 'ring-2 ring-primary-500' : ''
-                  }`}
-                >
-                  <Filter size={20} />
-                  <span className="hidden sm:inline">Filters</span>
-                </motion.button>
+                {/* Filter & Search Buttons */}
+                <div className="flex gap-2">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`glass-button-secondary h-12 px-4 flex items-center gap-2 justify-center ${
+                      showFilters ? 'ring-2 ring-primary-500' : ''
+                    }`}
+                  >
+                    <Filter size={18} />
+                    <span className="hidden sm:inline text-sm">{radius}km</span>
+                  </motion.button>
 
-                {/* Search Button */}
-                <motion.button
-                  type="submit"
-                  disabled={loading || isLocating}
-                  whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(139, 92, 246, 0.5)' }}
-                  whileTap={{ scale: 0.98 }}
-                  className="glass-button h-14 px-8 flex items-center gap-2 justify-center min-w-[160px] relative overflow-hidden group"
-                >
-                  <motion.span
-                    className="absolute inset-0 bg-gradient-to-r from-primary-600 to-purple-700"
-                    initial={{ x: '-100%' }}
-                    whileHover={{ x: 0 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                  <span className="relative flex items-center gap-2">
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="glass-button h-12 px-6 flex items-center gap-2 justify-center min-w-[120px]"
+                  >
                     {loading ? (
-                      <Loader2 size={20} className="animate-spin" />
+                      <Loader2 size={18} className="animate-spin" />
                     ) : (
                       <>
-                        <Zap size={20} className="group-hover:animate-pulse" />
-                        <span className="font-semibold">Search</span>
+                        <Zap size={18} />
+                        <span className="font-medium">Search</span>
                       </>
                     )}
-                  </span>
-                </motion.button>
+                  </motion.button>
+                </div>
               </div>
 
-              {/* Filters Panel */}
+              {/* Compact Filters Panel */}
               <AnimatePresence>
                 {showFilters && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="pt-4 border-t border-white/10"
+                    className="pt-3 mt-3 border-t border-white/10"
                   >
-                    <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                      <div className="flex-1 w-full">
-                        <label className="flex items-center justify-between text-sm text-white/70 mb-3">
-                          <span>Search Radius</span>
-                          <span className="font-mono text-primary-400">{radius} km</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="range"
-                            min="1"
-                            max="50"
-                            value={radius}
-                            onChange={(e) => setRadius(parseInt(e.target.value))}
-                            className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
-                            style={{
-                              background: `linear-gradient(to right, rgb(139, 92, 246) ${radius * 2}%, rgba(255,255,255,0.1) ${radius * 2}%)`,
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-white/40 mt-1">
-                          <span>1 km</span>
-                          <span>50 km</span>
-                        </div>
-                      </div>
-                      
-                      <motion.div 
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5"
-                        animate={userLocation ? {} : pulseAnimation}
-                      >
-                        <motion.div
-                          animate={userLocation ? { scale: [1, 1.2, 1] } : {}}
-                          transition={{ duration: 0.5 }}
-                        >
-                          <MapPin 
-                            size={20} 
-                            className={userLocation ? 'text-green-400' : 'text-yellow-400'} 
-                          />
-                        </motion.div>
-                        {userLocation ? (
-                          <div className="text-sm">
-                            <span className="text-green-400 font-medium">Location Active</span>
-                            <p className="text-white/50 text-xs">
-                              {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-yellow-400 text-sm">Getting location...</span>
-                        )}
-                      </motion.div>
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm text-white/70">Radius:</label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="50"
+                        value={radius}
+                        onChange={(e) => setRadius(parseInt(e.target.value))}
+                        className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to right, rgb(139, 92, 246) ${radius * 2}%, rgba(255,255,255,0.1) ${radius * 2}%)`,
+                        }}
+                      />
+                      <span className="text-sm font-mono text-primary-400 w-16">{radius} km</span>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </form>
-
-            {/* Location Error */}
-            <AnimatePresence>
-              {locationError && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-4 flex items-center gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30"
-                >
-                  <AlertCircle size={18} className="text-yellow-400 flex-shrink-0" />
-                  <span className="text-yellow-400 text-sm">{locationError}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </motion.div>
         </motion.div>
 
@@ -782,6 +735,26 @@ const SearchPage = () => {
                                   >
                                     <Phone size={18} className="text-green-400" />
                                   </motion.a>
+
+                                  {/* Favorite Button */}
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavorite(result);
+                                    }}
+                                    className={`p-2.5 rounded-xl transition-colors ${
+                                      favorites[result.id]
+                                        ? 'bg-red-500/20 hover:bg-red-500/30'
+                                        : 'bg-white/10 hover:bg-red-500/20'
+                                    }`}
+                                  >
+                                    <Heart 
+                                      size={18} 
+                                      className={favorites[result.id] ? 'text-red-400 fill-red-400' : 'text-white/60'}
+                                    />
+                                  </motion.button>
                                 </div>
                               </div>
                             </div>

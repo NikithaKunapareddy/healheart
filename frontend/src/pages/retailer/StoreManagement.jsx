@@ -173,10 +173,6 @@ const StoreManagement = () => {
       toast.error('Please fill in all address fields');
       return;
     }
-    if (!formData.latitude || !formData.longitude) {
-      toast.error('Please set your store location');
-      return;
-    }
     if (!formData.phone?.trim()) {
       toast.error('Phone number is required');
       return;
@@ -201,6 +197,19 @@ const StoreManagement = () => {
         }
       }
 
+      // If coordinates not provided, try to geocode from address
+      let latitude = formData.latitude ? parseFloat(formData.latitude) : null;
+      let longitude = formData.longitude ? parseFloat(formData.longitude) : null;
+      
+      // If no coordinates, use default location (center of India) or geocode
+      if (!latitude || !longitude) {
+        // Default to center of the city/state if provided, otherwise India center
+        // In production, you would use a geocoding service here
+        latitude = latitude || 20.5937;  // Default India latitude
+        longitude = longitude || 78.9629; // Default India longitude
+        toast('Using default coordinates. You can update them later.', { icon: 'ℹ️' });
+      }
+
       const storeData = {
         store_name: formData.store_name.trim(),
         description: formData.description?.trim() || null,
@@ -208,8 +217,8 @@ const StoreManagement = () => {
         city: formData.city.trim(),
         state: formData.state.trim(),
         pincode: formData.pincode?.trim() || null,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
+        latitude: latitude,
+        longitude: longitude,
         phone: formData.phone.trim(),
         email: formData.email?.trim() || null,
         license_number: formData.license_number?.trim() || null,
