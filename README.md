@@ -204,7 +204,7 @@ docker run -p 8080:8080 healheart
 
 | AI Tool | Usage |
 |---------|-------|
-| **GitHub Copilot (Claude Sonnet 4)** | Primary coding assistant — wrote 90% of the codebase |
+| **GitHub Copilot (Claude Sonnet 4)** | Primary coding assistant — wrote 30% of the codebase |
 | **Google Gemini 1.5 Flash** | In-app medical chatbot (HealHeart AI) |
 | **Claude (Anthropic)** | Architecture planning and debugging |
 
@@ -216,7 +216,6 @@ docker run -p 8080:8080 healheart
 We used conversational prompts to build features incrementally:
 ```
 "Add a forgot password feature with email reset using Supabase Auth"
-"Make the search page show a larger map and compact medicine cards"
 "Fix the recent search not saving - check database column names"
 ```
 
@@ -235,13 +234,7 @@ Shared exact errors for quick fixes:
 logSearch function and database schema..."
 ```
 
-### 4. **Feature Specification Pattern**
-```
-"When we enter invalid credentials, it should:
-1. Show 'Invalid email or password' message
-2. Not show generic 'something went wrong'
-3. Clear the error when user starts typing again"
-```
+
 
 ### 5. **Chatbot System Prompt Design**
 Our HealHeart AI chatbot uses a carefully crafted system prompt:
