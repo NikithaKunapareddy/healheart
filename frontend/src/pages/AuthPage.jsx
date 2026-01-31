@@ -48,9 +48,17 @@ const AuthPage = () => {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
+        // Pass selectedRole to login for role verification
+        await login(formData.email, formData.password, selectedRole);
         clearTimeout(loadingTimeout);
         toast.success('Welcome back!');
+        
+        // Navigate based on selected role
+        if (selectedRole === 'retailer') {
+          navigate('/retailer/dashboard');
+        } else {
+          navigate('/customer/dashboard');
+        }
       } else {
         await register(
           formData.email,
@@ -61,14 +69,13 @@ const AuthPage = () => {
         );
         clearTimeout(loadingTimeout);
         toast.success('Account created successfully!');
-      }
-      
-      // Navigate immediately - don't wait
-      const profile = useAuthStore.getState().profile;
-      if (profile?.role === 'retailer') {
-        navigate('/retailer/dashboard');
-      } else {
-        navigate('/customer/dashboard');
+        
+        // Navigate based on selected role
+        if (selectedRole === 'retailer') {
+          navigate('/retailer/dashboard');
+        } else {
+          navigate('/customer/dashboard');
+        }
       }
     } catch (error) {
       clearTimeout(loadingTimeout);
@@ -107,82 +114,79 @@ const AuthPage = () => {
             </p>
           </div>
 
-          {/* Role Selection (Sign Up Only) */}
-          <AnimatePresence mode="wait">
-            {!isLogin && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6"
+          {/* Role Selection (Always show for both Login and Sign Up) */}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mb-6"
+          >
+            <label className="block text-sm font-medium mb-3">
+              {isLogin ? 'Sign in as:' : 'I am a:'}
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedRole('customer')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  selectedRole === 'customer'
+                    ? 'border-primary-500 bg-primary-500/20'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
               >
-                <label className="block text-sm font-medium mb-3">I am a:</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedRole('customer')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      selectedRole === 'customer'
-                        ? 'border-primary-500 bg-primary-500/20'
-                        : 'border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <UserCircle
-                      size={32}
-                      className={`mx-auto mb-2 ${
-                        selectedRole === 'customer'
-                          ? 'text-primary-400'
-                          : 'text-white/50'
-                      }`}
-                    />
-                    <span
-                      className={`block text-sm font-medium ${
-                        selectedRole === 'customer' ? 'text-white' : 'text-white/70'
-                      }`}
-                    >
-                      Customer
-                    </span>
-                    <span className="block text-xs text-white/50 mt-1">
-                      Find medicines
-                    </span>
-                  </motion.button>
+                <UserCircle
+                  size={32}
+                  className={`mx-auto mb-2 ${
+                    selectedRole === 'customer'
+                      ? 'text-primary-400'
+                      : 'text-white/50'
+                  }`}
+                />
+                <span
+                  className={`block text-sm font-medium ${
+                    selectedRole === 'customer' ? 'text-white' : 'text-white/70'
+                  }`}
+                >
+                  Customer
+                </span>
+                <span className="block text-xs text-white/50 mt-1">
+                  Find medicines
+                </span>
+              </motion.button>
 
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedRole('retailer')}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      selectedRole === 'retailer'
-                        ? 'border-purple-500 bg-purple-500/20'
-                        : 'border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <Store
-                      size={32}
-                      className={`mx-auto mb-2 ${
-                        selectedRole === 'retailer'
-                          ? 'text-purple-400'
-                          : 'text-white/50'
-                      }`}
-                    />
-                    <span
-                      className={`block text-sm font-medium ${
-                        selectedRole === 'retailer' ? 'text-white' : 'text-white/70'
-                      }`}
-                    >
-                      Pharmacy
-                    </span>
-                    <span className="block text-xs text-white/50 mt-1">
-                      List your store
-                    </span>
-                  </motion.button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedRole('retailer')}
+                className={`p-4 rounded-xl border-2 transition-all ${
+                  selectedRole === 'retailer'
+                    ? 'border-purple-500 bg-purple-500/20'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
+              >
+                <Store
+                  size={32}
+                  className={`mx-auto mb-2 ${
+                    selectedRole === 'retailer'
+                      ? 'text-purple-400'
+                      : 'text-white/50'
+                  }`}
+                />
+                <span
+                  className={`block text-sm font-medium ${
+                    selectedRole === 'retailer' ? 'text-white' : 'text-white/70'
+                  }`}
+                >
+                  Pharmacy
+                </span>
+                <span className="block text-xs text-white/50 mt-1">
+                  List your store
+                </span>
+              </motion.button>
+            </div>
+          </motion.div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

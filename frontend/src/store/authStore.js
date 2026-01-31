@@ -115,33 +115,25 @@ const useAuthStore = create(
           const { user, session } = await signUp(email, password, fullName, role, phone);
           
           if (user) {
-            // Set user data immediately with metadata
+            // Set user data immediately with provided data
             set({
               user,
               session,
               profile: {
                 id: user.id,
-                email: user.email,
+                email: email,
                 full_name: fullName,
                 role: role,
+                phone: phone,
               },
               loading: false,
               initialized: true,
             });
             
-            // Try to fetch actual profile in background
-            setTimeout(async () => {
-              try {
-                const profile = await getProfile(user.id);
-                if (profile) {
-                  set({ profile });
-                }
-              } catch (e) {
-                // Ignore - we already have basic profile
-              }
-            }, 500);
+            return { user, session };
           }
           
+          set({ loading: false });
           return { user, session };
         } catch (error) {
           set({ loading: false, error: error.message });
@@ -149,14 +141,16 @@ const useAuthStore = create(
         }
       },
 
-      // Sign in - optimized for speed
-      login: async (email, password) => {
+      // Sign in - optimized for speed with role verification
+      login: async (email, password, expectedRole = null) => {
         try {
           set({ loading: true, error: null });
           
-          const { user, session } = await signIn(email, password);
+          const { user, session } = await signIn(email, password, expectedRole);
           
           if (user) {
+            const role = user.user_metadata?.role || expectedRole || 'customer';
+            
             // Set immediately with user metadata
             set({
               user,
@@ -165,7 +159,7 @@ const useAuthStore = create(
                 id: user.id,
                 email: user.email,
                 full_name: user.user_metadata?.full_name || email.split('@')[0],
-                role: user.user_metadata?.role || 'customer',
+                role: role,
               },
               loading: false,
               initialized: true,
