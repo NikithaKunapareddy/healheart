@@ -1,4 +1,4 @@
-name: Deploy MediFind to Cloud Run
+name: Deploy HealHeart to Cloud Run
 
 on:
   push:
@@ -8,8 +8,8 @@ on:
 env:
   PROJECT_ID: project-e899f1f9-5175-4330-8c5
   REGION: asia-south1
-  SERVICE: medifind
-  REPO: medifind-repo
+  SERVICE: healheart
+  REPO: healheart-repo
 
 jobs:
   deploy-frontend:
