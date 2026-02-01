@@ -10,7 +10,7 @@
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🌐_LIVE_DEMO-healheart--app-9333EA?style=for-the-badge&labelColor=1f2937)](https://healheart-344002794323.asia-south1.run.app/)
+[![Live Demo](https://img.shields.io/badge/🌐_LIVE_DEMO-healheart--app-9333EA?style=for-the-badge&labelColor=1f2937)](https://healheart-juzx62eyxq-el.a.run.app/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Likhith623/healheart)
 [![Demo Video](https://img.shields.io/badge/📹_Demo_Video-Watch-FF0000?style=for-the-badge&labelColor=1f2937)](https://github.com/Likhith623/healheart)
 
