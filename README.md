@@ -641,9 +641,14 @@ Built with 💜 and countless late nights
 
 ### Contributors
 
+<a href="https://github.com/NikithaKunapareddy">
+  <img src="https://img.shields.io/badge/NikithaKunapareddy-Developer-9333EA?style=for-the-badge&logo=github&logoColor=white" alt="NikithaKunapareddy"/>
+</a>
+
 <a href="https://github.com/Likhith623">
   <img src="https://img.shields.io/badge/Likhith623-Developer-9333EA?style=for-the-badge&logo=github&logoColor=white" alt="Likhith623"/>
 </a>
+
 
 </div>
 
